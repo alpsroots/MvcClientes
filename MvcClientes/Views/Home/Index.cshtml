@@ -1,0 +1,261 @@
+﻿@using MvcClientes.Models
+@model IEnumerable<Cliente>
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+    <style type="text/css">
+        body {
+            font-family: Arial;
+            font-size: 10pt;
+        }
+
+        .table {
+            border: 1px solid #ccc;
+            border-collapse: collapse;
+        }
+
+            .table th {
+                background-color: #F7F7F7;
+                color: #333;
+                font-weight: bold;
+            }
+
+            .table th, .table td {
+                padding: 5px;
+                border: 1px solid #ccc;
+            }
+    </style>
+</head>
+<body>
+    <table id="tblCustomers" class="table" cellpadding="0" cellspacing="0">
+        <tr>
+            <th style="width:100px">Cliente Id</th>
+            <th style="width:150px">Nome</th>
+            <th style="width:150px">Endereço</th>
+            <th style="width:150px">E-mail</th>
+            <th style="width:150px"></th>
+        </tr>
+        @foreach (Cliente cliente in Model)
+        {
+            <tr>
+                <td class="ClienteId">
+                    <span>@cliente.ClienteId</span>
+                </td>
+                <td class="Nome">
+                    <span>@cliente.Nome</span>
+                    <input type="text" value="@cliente.Nome" style="display:none" />
+                </td>
+                <td class="Endereco">
+                    <span>@cliente.Endereco</span>
+                    <input type="text" value="@cliente.Endereco" style="display:none" />
+                </td>
+                <td class="Email">
+                    <span>@cliente.Email</span>
+                    <input type="text" value="@cliente.Email" style="display:none" />
+                </td>
+                <td>
+                    <a class="Edit" href="javascript:;">Edit</a>
+                    <a class="Update" href="javascript:;" style="display:none">Update</a>
+                    <a class="Cancel" href="javascript:;" style="display:none">Cancel</a>
+                    <a class="Delete" href="javascript:;">Delete</a>
+                </td>
+            </tr>
+        }
+    </table>
+    <br />
+    <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+            <td style="width: 150px">
+                Nome:<br />
+                <input type="text" id="txtNome" style="width:140px" />
+            </td>
+            <td style="width: 150px">
+                Endereço:<br />
+                <input type="text" id="txtEndereco" style="width:140px" />
+            </td>
+            <td style="width: 150px">
+                E-mail:<br />
+                <input type="text" id="txtEmail" style="width:140px" />
+            </td>
+            <td style="width: 200px">
+                <br />
+                <input type="button" id="btnAdd" value="Add" />
+            </td>
+        </tr>
+    </table>
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
+    <script type="text/javascript">
+
+        function AppendRow(row, clienteId, nome, endereco, email) {
+            //Bind ClienteId.
+            $(".ClienteId", row).find("span").html(clienteId);
+
+            //Bind Nome.
+            $(".Nome", row).find("span").html(nome);
+            $(".Nome", row).find("input").val(nome);
+
+            //Bind Endereco.
+            $(".Endereco", row).find("span").html(endereco);
+            $(".Endereco", row).find("input").val(endereco);
+
+            //Bind Email.
+            $(".Email", row).find("span").html(email);
+            $(".Email", row).find("input").val(email);
+
+            row.find(".Edit").show();
+            row.find(".Delete").show();
+
+            $("#tblCustomers").append(row);
+        };
+
+        //Edit event handler.
+        $("body").on("click", "#tblCustomers .Edit", function () {
+            var row = $(this).closest("tr");
+            $("td", row).each(function () {
+                if ($(this).find("input").length > 0) {
+                    $(this).find("input").show();
+                    $(this).find("span").hide();
+                }
+            });
+            row.find(".Update").show();
+            row.find(".Cancel").show();
+            row.find(".Delete").hide();
+            $(this).hide();
+        });
+
+        //Cancel event handler.
+        $("body").on("click", "#tblCustomers .Cancel", function () {
+            var row = $(this).closest("tr");
+            $("td", row).each(function () {
+                if ($(this).find("input").length > 0) {
+                    var span = $(this).find("span");
+                    var input = $(this).find("input");
+                    input.val(span.html());
+                    span.show();
+                    input.hide();
+                }
+            });
+            row.find(".Edit").show();
+            row.find(".Delete").show();
+            row.find(".Update").hide();
+            $(this).hide();
+        });
+
+        //Add event handler.
+        $("body").on("click", "#btnAdd", function () {
+            var cliente = {
+                "Nome": $("#txtNome").val(),
+                "Endereco": $("#txtEndereco").val(),
+                "Email": $("#txtEmail").val()
+            }
+
+            $.ajax({
+                url: '/Home/InsertCliente/',
+                data: JSON.stringify(cliente),
+                type: 'POST',
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    var row = $("#tblCustomers tr:last-child");
+                    if ($("#tblCustomers tr:last-child span").eq(0).html() != "&nbsp;") {
+                        row = row.clone();
+                    }
+                    AppendRow(row, data.clienteId, data.nome, data.endereco, data.email);
+                    $("#txtNome").val("");
+                    $("#txtEndereco").val("");
+                    $("#txtEmail").val("");
+                }
+            });
+
+            //var txtNome = $("#txtNome");
+            //var txtEndereco = $("#txtEndereco");
+            //var txtEmail = $("#txtEmail");
+            //$.ajax({
+            //    type: "POST",
+            //    url: "/Home/InsertCliente",
+            //    data: '{ nome: "' + txtNome.val() + '", endereco: "' + txtEndereco.val() + '", email: "' + txtEmail.val() + '" }',
+            //    contentType: "application/json; charset=utf-8",
+            //    dataType: "json",
+            //    success: function (r) {
+            //        var row = $("#tblCustomers tr:last-child");
+            //        if ($("#tblCustomers tr:last-child span").eq(0).html() != "&nbsp;") {
+            //            row = row.clone();
+            //        }
+            //        AppendRow(row, r.clienteId, r.nome, r.endereco, r.email);
+            //        txtNome.val("");
+            //        txtEndereco.val("");
+            //        txtEmail.val("");
+            //    }
+            //});
+        });
+
+        //Update event handler.
+        $("body").on("click", "#tblCustomers .Update", function () {
+
+            var row = $(this).closest("tr");
+            $("td", row).each(function () {
+                if ($(this).find("input").length > 0) {
+                    var span = $(this).find("span");
+                    var input = $(this).find("input");
+                    span.html(input.val());
+                    span.show();
+                    input.hide();
+                }
+            });
+            row.find(".Edit").show();
+            row.find(".Delete").show();
+            row.find(".Cancel").hide();
+            $(this).hide();
+
+            var cliente = {
+                "ClienteId": row.find(".ClienteId").find("span").html(),
+                "Nome": row.find(".Nome").find("span").html(),
+                "Endereco": row.find(".Endereco").find("span").html(),
+                "Email": row.find(".Email").find("span").html()
+            }
+
+            $.ajax({
+                url: '/Home/UpdateCliente/',
+                data: JSON.stringify(cliente),
+                type: 'POST',
+                traditional: true,
+                contentType: 'application/json',
+                success: function (data) {
+                    alert('Sucesso');
+                }
+            });
+        });
+
+        //Delete event handler.
+        $("body").on("click", "#tblCustomers .Delete", function () {
+            if (confirm("Deseja deletar este cliente ?")) {
+                var row = $(this).closest("tr");
+                var clienteId = row.find("span").html();
+                $.ajax({
+                    url: '/Home/DeleteCliente/',
+                    data: clienteId,
+                    type: 'POST',
+                    traditional: true,
+                    contentType: 'application/json',
+                    success: function (response) {
+                        if ($("#tblCustomers tr").length > 2) {
+                            row.remove();
+                        } else {
+                            row.find(".Edit").hide();
+                            row.find(".Delete").hide();
+                            row.find("span").html('&nbsp;');
+                        }
+                    }
+                });
+            }
+        });
+
+    </script>
+</body >
+</html >
